@@ -3,8 +3,8 @@ import { TextField, Button, Container, Typography, Box } from '@mui/material';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 
 function Login() {
-  let userId = useRef();
-  let pwd = useRef();
+  let userId = useRef(); // 값을 꺼낼때 그냥 let쓰면 문법이 리엑트문법과 다르게 뽑아내게됨
+  let pwd = useRef();    // 이럴때는 Ref로 리액트 구조대로 함
   let navigate = useNavigate();
 
   return (
@@ -43,8 +43,8 @@ function Login() {
               .then(data => {
                 console.log(data);
                 alert(data.msg);
-                if(data.result){
-                navigate("/feed");
+                if (data.result) {
+                  navigate("/feed");
                 }
               })
           }}
