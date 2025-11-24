@@ -44,7 +44,12 @@ function Login() {
                 console.log(data);
                 alert(data.msg);
                 if (data.result) {
+                  localStorage.setItem("token" , data.token);
+                  //화면을 부드럽게 옮길수 있음 리엑트 장점 (안깜박임)
                   navigate("/feed");
+
+                  //만약 아래처럼 하면 화면 화면이 깜박임
+                  //location.href = "/feed";
                 }
               })
           }}

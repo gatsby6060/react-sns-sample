@@ -1,18 +1,32 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Typography, Box, Avatar, Grid, Paper } from '@mui/material';
+import {jwtDecode} from "jwt-decode";
+import { useNavigate } from 'react-router-dom';
 
 function MyPage() {
   let [user, setUser] = useState();
+  let navigate = useNavigate();
 
   function fnGetUser() {
     // 원래 jwt 토큰에서 꺼내야 함
-    let id = "qw123";
-    fetch("http://localhost:3010/user/" + id)
-      .then(res => res.json())
-      .then(data => {
-        console.log("돌아온데이터"+ JSON.stringify(data));
-        setUser(data.user);
-      })
+    const token = localStorage.getItem("token");
+    if (token) {
+      const decoded = jwtDecode(token);
+      console.log("decode==> ", decoded);
+      let id = "qw123";
+      fetch("http://localhost:3010/user/" + decoded.userId)
+        .then(res => res.json())
+        .then(data => {
+          console.log("돌아온데이터" + data);
+          setUser(data.user);
+        })
+    } else{
+      alert("로그인 후 이용해주세요.")
+      //화면을 부드럽게 옮길수 있음 리엑트 장점 (안깜박임)
+      navigate("/");
+    }
+
+
   }
 
   useEffect(() => {
@@ -53,7 +67,7 @@ function MyPage() {
             </Grid>
             <Grid item xs={4} textAlign="center">
               <Typography variant="h6">게시물</Typography>
-              <Typography variant="body1">{user?.cnt}</Typography>
+              <Typography variant="body1">{user?.CNT}</Typography>
             </Grid>
           </Grid>
           <Box sx={{ marginTop: 3 }}>

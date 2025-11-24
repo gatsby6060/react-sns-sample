@@ -14,10 +14,10 @@ const JWT_KEY = "server_secret_key"; // 해시 함수 실행 위해 사용할 �
 // })
 
 
-router.get("/:userId", async(req, res) => {
-    console.log("겟 라이우터 진입 /userId부분");
-     let { userId } = req.params;
-        
+router.get("/:userId", async (req, res) => {
+    
+    let { userId } = req.params;
+    console.log("겟 라이우터 진입 /userId부분", userId);
     try {
         // 1. 두개 쿼리 써서 리턴
         // let [list] = await db.query("SELECT * FROM tbl_user WHERE userId = ?", {userId})
@@ -27,19 +27,21 @@ router.get("/:userId", async(req, res) => {
         //     cnt: cnt[0],
         // });
         // 2. 조인쿼리 만들어서 하나로 리턴
-      let sql = "SELECT U.*, cnt "
-                + "FROM TBL_USER U "
-                + "INNER JOIN ( "
-                + "SELECT USERID, COUNT(*) CNT "
-                + "FROM TBL_FEED "
-                + "WHERE USERID = ? "
-                + ") T ON U.USERID = T.USERID";
-        let [list] = await db.query(sql,[userId]);       
+        let sql =
+            "SELECT U.*, IFNULL(T.CNT, 0) CNT " +
+            "FROM TBL_USER U " +
+            "LEFT JOIN ( " +
+            "    SELECT USERID, COUNT(*) CNT " +
+            "    FROM TBL_FEED " +
+            "    GROUP BY USERID " +
+            ") T ON U.USERID = T.USERID " +
+            "WHERE U.USERID = ?";
+        let [list] = await db.query(sql, [userId]);
         res.json({
             user: list[0],
-            result : "success"
+            result: "success"
         })
-        
+
 
     } catch (error) {
         console.log("에러발생함 ", error);
@@ -89,19 +91,14 @@ router.post("/login", async (req, res) => {
                 let user = {
                     userId: list[0].userId,
                     userName: list[0].userName,
-                    // status: "A" //권한 하드코딩 (db없어서)
+                    status: "A" //권한 하드코딩 (db없어서)
                     // 권한 등 필요한 정보 추가
                 };
 
                 token = jwt.sign(user, JWT_KEY, { expiresIn: '1h' });
                 //  const token = jwt.sign({userId : user.id, name : user.name}, JWT_KEY, {expiresIn : '1h'});
                 console.log(token);
-                // 토큰 담아서 리턴
-                res.json({
-                    msg, //msg : msg
-                    result,  //result : result
-                    // token //token:token
-                });
+
             } else {
                 msg = "비밀번호를 확인해라";
             }
@@ -110,9 +107,11 @@ router.post("/login", async (req, res) => {
             msg = "아이디가 존재하지 않습니다."
         }
 
+        // 토큰 담아서 리턴
         res.json({
             result: result,
             msg: msg,
+            token //token:token   //서버가 로그인 시도당하고 성공하면 토큰을 클라이언트로 줌
         });
 
     } catch (error) {

@@ -39,6 +39,18 @@ function Menu() {
           </ListItemIcon>
           <ListItemText primary="마이페이지" />
         </ListItem>
+        <ListItem button component={Link} to="/login2">
+          <ListItemIcon>
+            <AccountCircle />
+          </ListItemIcon>
+          <ListItemText primary="신형로그인페이지(test중)" />
+        </ListItem>
+        <ListItem button component={Link} to="/mui">
+          <ListItemIcon>
+            <AccountCircle />
+          </ListItemIcon>
+          <ListItemText primary="MUI" />
+        </ListItem>
       </List>
     </Drawer>
   );

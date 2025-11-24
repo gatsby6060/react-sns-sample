@@ -23,6 +23,9 @@ import {
   Avatar,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { jwtDecode } from "jwt-decode";
+import { useNavigate } from 'react-router-dom';
+
 
 // const mockFeeds = [
 //   {
@@ -48,23 +51,48 @@ function Feed() {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
 
-    let [feeds, setFeeds] = useState([]);
+  let [feeds, setFeeds] = useState([]);
+  let navigate = useNavigate();
 
-  function fnGetFeed(){
+  function fnGetFeed() {
     // 일단 userId 하드코딩
-    let userId = "qw123";
-    fetch("http://localhost:3010/feed/" + userId)
-    .then(res => res.json())
-    .then(data => {
-      // console.log("돌아온데이터"+ JSON.stringify(data));
-      console.log("돌아온데이터 ", data );
-      setFeeds(data.list);
-    })
+    // let userId = "qw123";
+
+    const token = localStorage.getItem("token");
+    if (token) {
+      const decoded = jwtDecode(token);
+      console.log("decode==> ", decoded);
+      // let id = "qw123";
+      fetch("http://localhost:3010/feed/" + decoded.userId)
+        .then(res => res.json())
+        .then(data => {
+
+          console.log("피드, 돌아온데이터 JOSN변환 " + JSON.stringify(data));
+
+          setFeeds(data.list);
+
+          // setUser(data.user);
+        })
+    } else {
+      alert("로그인 해주세요");
+      //화면을 부드럽게 옮길수 있음 리엑트 장점 (안깜박임)
+      navigate("/");
+    }
+
+
+
+    // fetch("http://localhost:3010/feed/" + userId)
+    //   .then(res => res.json())
+    //   .then(data => {
+    //     // console.log("돌아온데이터"+ JSON.stringify(data));
+    //     console.log("돌아온데이터 ", data);
+    //     setFeeds(data.list);
+    //   })
   }
 
-  useEffect(()=>{
+  useEffect(() => {
     fnGetFeed()
-  } ,[]);
+  }, []);
 
 
 
@@ -92,6 +120,38 @@ function Feed() {
     }
   };
 
+  let fndelete = () => {
+    alert("삭제버튼 눌림");
+
+    const token = localStorage.getItem("token");
+    if (token) {
+      const decoded = jwtDecode(token);
+      console.log("삭제중 decode==> ", decoded);
+      console.log("pk는 ", selectedFeed.id);
+      let param = { id: selectedFeed.id };
+      // let id = "qw123";
+      fetch("http://localhost:3010/feed/" + selectedFeed.id, {
+        method: "DELETE",
+        headers: { "Content-type": "application/json" }, //headers임!
+        body: JSON.stringify(param),
+      })
+        .then(res => res.json())
+        .then(data => {
+
+          console.log("피드, 돌아온데이터 JOSN변환 " + JSON.stringify(data));
+
+          setFeeds(data.list);
+          setOpen(false);
+          fnGetFeed();
+          // setUser(data.user);
+        })
+    } else {
+      alert("로그인 해주세요");
+      //화면을 부드럽게 옮길수 있음 리엑트 장점 (안깜박임)
+      navigate("/");
+    }
+  };
+
   return (
     <Container maxWidth="md">
       <AppBar position="static">
@@ -102,25 +162,28 @@ function Feed() {
 
       <Box mt={4}>
         <Grid2 container spacing={3}>
-          {feeds.map((feed) => (
-            <Grid2 xs={12} sm={6} md={4} key={feed.id}>
-              <Card>
-                <CardMedia
-                  component="img"
-                  height="200"
-                  image={feed.imgPath}
-                  alt={feed.imgName}
-                  onClick={() => handleClickOpen(feed)}
-                  style={{ cursor: 'pointer' }}
-                />
-                <CardContent>
-                  <Typography variant="body2" color="textSecondary">
-                    {feed.content}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid2>
-          ))}
+          {
+            feeds.length > 0 ?
+              feeds.map((feed) => (
+                <Grid2 xs={12} sm={6} md={4} key={feed.id}>
+                  <Card>
+                    <CardMedia
+                      component="img"
+                      height="200"
+                      image={feed.imgPath}
+                      alt={feed.imgName}
+                      onClick={() => handleClickOpen(feed)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    <CardContent>
+                      <Typography variant="body2" color="textSecondary">
+                        {feed.content}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid2>
+              ))
+              : "등록된 피드가 없습니다 피드를 등록해주세요!"}
         </Grid2>
       </Box>
 
@@ -166,7 +229,7 @@ function Feed() {
               variant="outlined"
               fullWidth
               value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}           
+              onChange={(e) => setNewComment(e.target.value)}
             />
             <Button
               variant="contained"
@@ -179,9 +242,29 @@ function Feed() {
           </Box>
         </DialogContent>
         <DialogActions>
+          <Button onClick={() => {
+            // console.log(selectedFeed);
+            // 삭제요청 하면서 selectedFeed.id를 보낸다.
+            // fndelete()
+            fetch("http://localhost:3010/feed/" + selectedFeed.id, {
+              method: "DELETE",
+              headers: {
+                "Authorization": "Bearer " + localStorage.getItem("token") //token을꺼냄
+              }
+            })
+              .then(res => res.json())
+              .then(data => {
+                alert("삭제되었습니다.");
+                setOpen(false);
+                fnGetFeed();
+              })
+          }} variant='contained' color="primary">
+            삭제
+          </Button>
           <Button onClick={handleClose} color="primary">
             닫기
           </Button>
+
         </DialogActions>
       </Dialog>
     </Container>
